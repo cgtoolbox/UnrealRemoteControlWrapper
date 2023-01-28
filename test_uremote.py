@@ -81,6 +81,21 @@ preset = conn.get_preset(preset_name)
 print("Preset: ", preset)
 # >>> Preset:  UObject: /Game/RCP_TestPreset.RCP_TestPreset, of Class RemotePreset
 
+# Get a preset exposed property:
+preset_property = preset.get_property("Relative Location (SM_Lamp_Ceiling)")
+print("Relative Location (SM_Lamp_Ceiling) value: ", preset_property.eval())
+# >>> Relative Location (SM_Lamp_Ceiling) value: {'X': 330, 'Y': 10, 'Z': 0}
+
+# Set a property value:
+preset_property.set(Z=10.0)
+
+# Get a function
+preset_function = preset.get_function("My Lib Func (BPF_testFuncLib_C)")
+print("Preset function: ", preset_function)
+# >>> Preset function:  _URemotePresetFunction: My Lib Func (BPF_testFuncLib_C) (preset: RCP_TestPreset)
+preset_function.run()
+# ---> In unreal "Hello from lib !"
+
 # Get an exposed actor info, from preset.
 preset_exposed_actor = preset.get_actor("SM_TableRound")
 print("Exposed actor: ", preset_exposed_actor)
