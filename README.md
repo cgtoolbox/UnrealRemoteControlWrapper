@@ -9,6 +9,13 @@ It needs to have the remote API plugin installed on your Unreal project, as well
 WebControl.StartServer
 WebControl.EnableServerOnStartup
 ```
+By default, the script use these values bellow as host and port, it matches the default value of the remote plugin from Unreal install, it needs to be set to your values if needed:
+
+```
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 30010
+```
+
 Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/ScriptingAndAutomation/WebControl/Endpoints/).
 
 ##### Features
