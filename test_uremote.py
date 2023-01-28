@@ -10,8 +10,6 @@ conn = upyrc.URConnection()
 print("Ping: ", conn.ping())
 # >>> Ping: 0:00:00.015211
 
-test = conn.get_thumbnail(asset_path="/Game/StarterContent/Props/SM_Chair.uasset")
-
 print("\n----------- REMOTE OBJECT --------------------------------------------------------------------------------------------------------------------------------\n")
 
 # Access to object using paths
