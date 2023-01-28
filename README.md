@@ -14,14 +14,23 @@ Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/Prod
 ##### Features
 
 > ✔️ Get remote UObject by path.
+
 > ✔️ Run query with various filter (class, path, package etc.) to get UObjects.
+
 > ✔️ Get / Set UObject properties.
+
 > ✔️ Run UObject functions.
+
 > ✔️ Get remote blueprint and run functions.
+
 > ✔️ Get remote presets.
+
 > ✔️ Get / Set remote preset properties, functions, actors.
+
 > ✔️ Get utilities EditorActorSubsystem and EditorAssetLibrary.
+
 > ❌ Batch process is not supported at the moment, Unreal crashes when a batch call is executed.
+
 > ❌ Get thumbnail not supported.
 
 ##### Basic usage
