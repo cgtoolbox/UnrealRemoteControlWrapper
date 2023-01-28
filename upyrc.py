@@ -720,9 +720,7 @@ class _URemotePresetFunction:
         route_infos = ROUTE_PRESET_RUN_FUNCTION.copy()
         route_infos["route"] = route_infos["route"].replace("${PRESET_NAME}", self.preset_name)\
                                                    .replace("${FUNCTION_NAME}", self.display_name)
-        body = None
-        if kwargs != {}:
-            body = {"Parameters":kwargs}
+        body = {"Parameters":kwargs}
         return self.connection.run_request(route_infos=route_infos, json=body)
 
 @dataclass(eq=False)
@@ -804,7 +802,7 @@ class _URemotePreset(_URemoteObject):
         self._actors = self._init_actor_list(kwargs["describe"])
 
     def __getattr__(self, name):
-        return object.__getattr__(self, name)
+        return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -915,10 +913,8 @@ class _URemotePreset(_URemoteObject):
     def get_all_groups(self) -> dict[str, _URemotePresetGroup]:
         ''' Get all groups in the preset, return a list of _URemotePresetGroup.
         '''
-        if self._use_properties_cache:
-            return self._groups
-
-        self.refresh()
+        if not self._use_properties_cache:
+            self.refresh()
         return self._groups
 
     def get_group(self, group_name: str) -> _URemotePresetGroup:
@@ -930,10 +926,8 @@ class _URemotePreset(_URemoteObject):
     def get_all_actors(self) -> List[_URemotePresetActor]:
         ''' Get all actors exposed to the preset (if any), return a list of _URemotePresetActor.
         '''
-        if self._use_properties_cache:
-            return self._actors
-
-        self.refresh()
+        if not self._use_properties_cache:
+            self.refresh()
         return self._actors
 
     def get_actor(self, actor_display_name: str) -> _URemotePresetActor:
@@ -941,15 +935,34 @@ class _URemotePreset(_URemoteObject):
         '''
         return self.get_all_actors().get(actor_display_name)
 
+    def get_all_property_names(self) -> list[str]:
+        ''' Get all the property names exposed on the preset.
+        '''
+        if not self._use_properties_cache:
+            self.refresh()
+        return list(self._properties_cache.keys())
+
     def get_property(self, property_display_name: str) -> _URemotePresetProperty:
         ''' Get an exposed property on the preset, retuns a _URemotePresetProperty.
             From that object, value can be fetch using .eval(), or set, using .set(value).
         '''
-        if self._use_properties_cache:
-            return self._properties_cache.get(property_display_name)
-        
-        self.refresh()
+        if not self._use_properties_cache:
+            self.refresh()
         return self._properties_cache.get(property_display_name)
+
+    def get_all_function_name(self) -> list[str]:
+        ''' Get all exposed function's display name.
+        '''
+        if not self._use_properties_cache:
+            self.refresh()
+        return list(self._functions.keys())
+
+    def get_function(self, function_name: str) -> _URemotePresetFunction:
+        ''' Get a function exposed on the preset, by display name.
+        '''
+        if not self._use_properties_cache:
+            self.refresh()
+        return self._functions.get(function_name)
 
     # --- Misc ---
 
