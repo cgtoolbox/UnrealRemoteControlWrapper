@@ -1,9 +1,9 @@
 
 # UnrealRemoteControlWrapper
 
-A python 3 wrapper around Unreal [remote control api](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/ScriptingAndAutomation/WebControl/QuickStart/).
+A (work in progress) python 3 wrapper around Unreal [remote control api](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/ScriptingAndAutomation/WebControl/QuickStart/). It allows to control Unreal engine remotly, from a dcc ( maya, blender, houdini, etc. ), or a webapp, or any other sources, using a simple python api.
 
-It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd:
+It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
 
 ```
 WebControl.StartServer
@@ -11,15 +11,26 @@ WebControl.EnableServerOnStartup
 ```
 Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/ScriptingAndAutomation/WebControl/Endpoints/).
 
-> :warning: *Batch process is not supported at the moment, Unreal crashes when a batch call is executed.*
+##### Features
 
-#### Basic usage
+> ✔️ Get remote UObject by path.
+> ✔️ Run query with various filter (class, path, package etc.) to get UObjects.
+> ✔️ Get / Set UObject properties.
+> ✔️ Run UObject functions.
+> ✔️ Get remote blueprint and run functions.
+> ✔️ Get remote presets.
+> ✔️ Get / Set remote preset properties, functions, actors.
+> ✔️ Get utilities EditorActorSubsystem and EditorAssetLibrary.
+> ❌ Batch process is not supported at the moment, Unreal crashes when a batch call is executed.
+> ❌ Get thumbnail not supported.
+
+##### Basic usage
 
 ```python
 
 # Default host and port used by the api:
-upryc.DEFAULT_HOST = "127.0.0.1"
-upryc.DEFAULT_PORT = 30010
+upyrc.DEFAULT_HOST = "127.0.0.1"
+upyrc.DEFAULT_PORT = 30010
 
 # Init the connection
 conn = upyrc.URConnection()
@@ -55,17 +66,18 @@ print("Function result: ", function_result)
 
 ```
 
-#### Infos
+##### Infos
 
 More infos on file: [test_uremote.py](test_uremote.py)
 
 As well as help() on objects:
 ```python
-help(upryc.URConnection)
-help(upryc._URemoteObject)
+help(upyrc.URConnection)
+help(upyrc._URemoteObject)
 # etc..
 ```
-#### Contact
+##### Contact
 
-www.cgtoolbox.com
-contact@cgtoolbox.com
+🔗 www.cgtoolbox.com
+
+✉️ contact@cgtoolbox.com
