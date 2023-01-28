@@ -56,7 +56,7 @@ blueprint = conn.get_uobject(blueprint_path)
 print("Blueprint: ", blueprint)
 # >>> UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1, of Class /Game/Blueprints/BUA_TestBlueprint.BUA_TestBlueprint_C
 
-# You can run a function from the blueprint.
+# You can run an editor function from the blueprint.
 blueprint.run_function("SimpleTestFunc")
 # ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello world !
 
