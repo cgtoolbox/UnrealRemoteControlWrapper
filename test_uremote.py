@@ -15,7 +15,7 @@ print("\n----------- REMOTE OBJECT ---------------------------------------------
 # Access to object using paths
 chair_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2"
 
-robj_chair = conn.get_uobject(chair_path)
+robj_chair = conn.get_ruobject(chair_path)
 print("RUObject: " + str(robj_chair))
 # >>> RUObject: UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2, of Class /Script/Engine.StaticMeshActor
 
@@ -52,7 +52,7 @@ print("\n----------- REMOTE BLUEPRINT ------------------------------------------
 
 # You can also load a blueprint
 blueprint_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1"
-blueprint = conn.get_uobject(blueprint_path)
+blueprint = conn.get_ruobject(blueprint_path)
 print("Blueprint: ", blueprint)
 # >>> UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1, of Class /Game/Blueprints/BUA_TestBlueprint.BUA_TestBlueprint_C
 
@@ -136,9 +136,9 @@ chair_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2"
 lamp_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_4"
 table_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_6"
 
-robj_chair = conn.get_uobject(chair_path)
-robj_lamp = conn.get_uobject(lamp_path)
-robj_table = conn.get_uobject(table_path)
+robj_chair = conn.get_ruobject(chair_path)
+robj_lamp = conn.get_ruobject(lamp_path)
+robj_table = conn.get_ruobject(table_path)
 
 with conn.batch_context() as ctx:
 

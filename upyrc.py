@@ -71,7 +71,7 @@ class URConnection:
         This is also the class needed to instanciate _URemoteObject.
 
         connection = URConnection()
-        remote_obj = connection.get_uobject(obj_path)
+        remote_obj = connection.get_ruobject(obj_path)
 
         It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd:
         WebControl.StartServer
@@ -200,7 +200,7 @@ class URConnection:
         if not result: return []
         return result["Assets"]
 
-    def get_uobject(self, path: str, timeout: float= None, use_properties_cache=DEFAULT_USE_PROPERTIES_CACHE):
+    def get_ruobject(self, path: str, timeout: float= None, use_properties_cache=DEFAULT_USE_PROPERTIES_CACHE):
         ''' Mandatory function to run to create an _URemoteObject object, from its path.
             See _URemoteObject for more infos.
         '''
@@ -255,13 +255,13 @@ class URConnection:
         ''' Get the EditorActorSubsystem, more infos:
             https://docs.unrealengine.com/5.0/en-US/PythonAPI/class/EditorActorSubsystem.html
         '''
-        return self.get_uobject(EDITOR_ACTOR_SUBSYSTEM)
+        return self.get_ruobject(EDITOR_ACTOR_SUBSYSTEM)
 
     def get_editor_asset_library(self):
         ''' Get the EditorAssetLibrary, more infos:
             https://docs.unrealengine.com/4.27/en-US/PythonAPI/class/EditorAssetLibrary.html
         '''
-        return self.get_uobject(EDITOR_ASSET_LIBRARY)
+        return self.get_ruobject(EDITOR_ASSET_LIBRARY)
 
 @dataclass
 class BatchResult:
