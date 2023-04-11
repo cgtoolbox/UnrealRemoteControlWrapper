@@ -28,7 +28,7 @@ Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/Prod
 >
 > ✔️ Run UObject functions.
 >
-> ✔️ Get remote blueprint and run functions.
+> ✔️ Get remote blueprint actor and run functions.
 >
 > ✔️ Get remote presets.
 >
@@ -68,7 +68,7 @@ robj_chair.bEnableAutoLODGeneration = True
 print(dir(robj_chair))
 # >>> ['ActorHasTag (function)', 'AddActorLocalOffset (function)', 'AddActorLocalRotation (function)', 'AddActorLocalTransform (function)',  ... 'bRelevantForLevelBounds (property)', 'bRelevantForNetworkReplays (property)', 'bStaticMeshReplicateMovement (property)']
 
-# You can also load a blueprint
+# You can also load a blueprint actor.
 blueprint_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1"
 blueprint = conn.get_uobject(blueprint_path)
 print("Blueprint: ", blueprint)

@@ -8,8 +8,6 @@ import traceback
 import typing
 from typing import List
 
-__version__ = "0.9.0"
-
 # Log settings
 _LOG_FORMAT = "[%(filename)s:%(lineno)s][%(asctime)s][%(levelname)s] %(message)s"
 logging.basicConfig(format=_LOG_FORMAT)
@@ -54,7 +52,8 @@ EDITOR_ACTOR_SUBSYSTEM = "/Script/UnrealEd.Default__EditorActorSubsystem"
 EDITOR_ASSET_LIBRARY = "/Script/EditorScriptingUtilities.Default__EditorAssetLibrary"
 
 def get_version():
-    return __version__
+    import upyrc
+    return upyrc.__version__
 
 # Exceptions
 class URConnectionError(Exception): ...

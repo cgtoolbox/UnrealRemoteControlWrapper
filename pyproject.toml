@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "upyrc"
+description = "Python wrapper around the Unreal engine remote control API."
+readme = "README.md"
+dynamic = ["version"]
+authors = [
+  { name="cgtoolbox", email="contact@cgtoolbox.com" },
+]
+requires-python = ">=3.6"
+dependencies = [
+    "requests"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "upyrc.__version__"}
+
+[project.urls]
+"Homepage" = "https://github.com/cgtoolbox/UnrealRemoteControlWrapper"

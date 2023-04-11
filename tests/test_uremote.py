@@ -50,7 +50,7 @@ print(dir(robj_chair))
 
 print("\n----------- REMOTE BLUEPRINT --------------------------------------------------------------------------------------------------------------------------------\n")
 
-# You can also load a blueprint
+# You can also load a blueprint actor.
 blueprint_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1"
 blueprint = conn.get_ruobject(blueprint_path)
 print("Blueprint: ", blueprint)
