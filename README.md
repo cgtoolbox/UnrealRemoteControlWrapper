@@ -3,6 +3,11 @@
 
 A (work in progress) python 3 wrapper around Unreal [remote control api](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/ScriptingAndAutomation/WebControl/QuickStart/). It allows to control Unreal engine remotly, from a dcc ( maya, blender, houdini, etc. ), or a webapp, or any other sources, using a simple python api.
 
+upyrc is available on pip:
+```
+python -m pip install upyrc
+```
+
 It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
 
 ```
