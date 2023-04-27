@@ -1,4 +1,4 @@
-import upyrc
+from upyrc import upyrc
 #import logging
 #upyrc.set_log_level(logging.DEBUG)
 print("Version:", upyrc.get_version())
