@@ -6,7 +6,7 @@ import requests
 from requests.exceptions import HTTPError
 import traceback
 import typing
-from typing import List
+from typing import List, Dict
 
 # Log settings
 _LOG_FORMAT = "[%(filename)s:%(lineno)s][%(asctime)s][%(levelname)s] %(message)s"
@@ -240,7 +240,7 @@ class URConnection:
             return result["Presets"]
         return
 
-    def get_thumbnail(self, asset_path='') -> dict:
+    def get_thumbnail(self, asset_path='') -> Dict:
         ''' Get an thumbnail image from an asset path. 
         '''
         assert asset_path != '', "Invalid asset path."
@@ -909,7 +909,7 @@ class _URemotePreset(_URemoteObject):
         else:
             return result["Metadata"]
 
-    def get_all_groups(self) -> dict[str, _URemotePresetGroup]:
+    def get_all_groups(self) -> Dict[str, _URemotePresetGroup]:
         ''' Get all groups in the preset, return a list of _URemotePresetGroup.
         '''
         if not self._use_properties_cache:

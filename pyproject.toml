@@ -10,7 +10,7 @@ dynamic = ["version"]
 authors = [
   { name="cgtoolbox", email="contact@cgtoolbox.com" },
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
     "requests"
 ]
