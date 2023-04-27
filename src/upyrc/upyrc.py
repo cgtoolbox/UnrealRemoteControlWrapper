@@ -300,7 +300,7 @@ class _URConnectionBatchContext:
 
         self._requests.append(req)
 
-    def execute(self) -> list[BatchResult]:
+    def execute(self) -> List[BatchResult]:
         ''' Execute all requests saved in contect's queue, in one batch request.
             Return an array of BatchResult, with each individual request's result.
         '''
@@ -385,7 +385,7 @@ class _URemoteObject:
 
         self._properties_cache.update(self._init_property_list(describe))
 
-    def __dir__(self) -> list[str]:
+    def __dir__(self) -> List[str]:
 
         attrs = list(self.__dict__.keys()) + \
                 [s + " (function)" for s in list(self._functions.keys())] + \
@@ -934,7 +934,7 @@ class _URemotePreset(_URemoteObject):
         '''
         return self.get_all_actors().get(actor_display_name)
 
-    def get_all_property_names(self) -> list[str]:
+    def get_all_property_names(self) -> List[str]:
         ''' Get all the property names exposed on the preset.
         '''
         if not self._use_properties_cache:
@@ -949,7 +949,7 @@ class _URemotePreset(_URemoteObject):
             self.refresh()
         return self._properties_cache.get(property_display_name)
 
-    def get_all_function_name(self) -> list[str]:
+    def get_all_function_name(self) -> List[str]:
         ''' Get all exposed function's display name.
         '''
         if not self._use_properties_cache:
