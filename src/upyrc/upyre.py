@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 '''
-This module allows a user to execute python code remotely on unreal engine session.
-It needs to have the python plugin enabled on unreal, as well as the allow python remote execution set on.
+This module allows a user to execute python code remotely on a unreal engine session.
+It needs to have the python plugin enabled on unreal, as well as the allow python remote execution option set on.
 
 In order to create a connection, we need to fetch the settings of the python plugin, this can be done by giving the full path to a uproject to the create config object:
 
@@ -378,7 +378,7 @@ class PythonRemoteCommandConnection(_Message):
 class PythonRemoteConnection:
     ''' Open a connection to a unreal node (by project name, or by default, the first one found, depending on the config).
         From there you can execute a python command.
-        It can be used as context manager, to close the connection once out. TODO
+        It can be used as context manager, to close the connection once out.
     '''
     def __init__(self, config: RemoteExecutionConfig=None, project_name: str=''):
 
