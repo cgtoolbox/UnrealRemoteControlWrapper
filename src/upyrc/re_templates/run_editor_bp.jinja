@@ -1,0 +1,20 @@
+{#  
+    Simple template to execute a function from a Utility blueprint if "call_method" is set to True.
+    'bp_class_path' must be a valid class path, finishing by _C.
+    if "set_properties" is set to true, take a dictionnary 'properties' as property name / value to set properties on the loaded BP.
+#}
+import unreal
+UnrealEditorSubsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+
+bp_class = unreal.load_object(None, "{{ bp_class_path }}")
+bp_cdo = unreal.get_default_object(bp_class) 
+
+{% if call_method %}
+bp_cdo.call_method("{{ bp_method_name }}", {{ args }}, {{ kwargs }})
+{% endif %}
+
+{% if set_properties %}
+{% for prop_name, prop_value in properties.items() %}
+bp_cdo.set_editor_property("{{ prop_name }}", {{ prop_value }})
+{% endfor %}
+{% endif %}

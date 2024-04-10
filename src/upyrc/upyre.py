@@ -3,6 +3,7 @@ import uuid
 import socket
 import logging
 import json
+from jinja2 import Environment, PackageLoader
 from pathlib import Path
 
 '''
@@ -20,7 +21,7 @@ config = upyre.RemoteExecutionConfig(mutlicast_group=("239.0.0.1", 6766), multic
 To open a connection, you have to use PythonRemoteConnection object, it can be used as context manager like this:
 
 with upyre.PythonRemoteConnection(config) as conn:
-    result = conn.execute_python_command("unreal.log('hello form python !'), exec_type=upyre.ExecTypes.EXECUTE_FILE, raise_exc=True)
+    result = conn.execute_python_command("unreal.log('hello form python !')", exec_type=upyre.ExecTypes.EXECUTE_FILE, raise_exc=True)
     print(result)
 
 Or you can call open_connection() and close_connection() manually when needed.
@@ -47,6 +48,9 @@ PROTOCOL_VERSION = 1
 SOCKET_TIMEOUT = 0.5 # second
 PYTHON_SETTING_INI_FILE = "DefaultEngine.ini"
 PYTHON_SETTING_ENTRY = "/Script/PythonScriptPlugin.PythonScriptPluginSettings"  # read only in DefaultEngine.ini in projects
+
+# Jinja templates env
+jinja_env = Environment(loader=PackageLoader("upyrc", "re_templates"))
 
 # Command ip and port to send commands between python and unreal.
 def get_command_address():
@@ -454,3 +458,52 @@ class PythonRemoteConnection:
         if not self.remote_command_connection:
             raise ConnectionError("Connection was not openned.")
         return self.remote_command_connection.send(command=command, exec_type=exec_type, unattended=unattended, timeout=timeout, raise_exc=raise_exc)
+    
+    def execute_template_command(self, template_name: str, timeout: float=5.0, raise_exc: bool=False, template_kwargs={}):
+        ''' Execute a rendered jinja template file, found in re_templates folder.
+            'template_kwargs' dicitonnary will be applied to the template.
+        '''
+        if not template_name.endswith(".jinja"):
+            template_name = template_name.split('.')[0] + ".jinja"
+
+        template = jinja_env.get_template(template_name)
+        python_code = template.render(template_kwargs)
+        return self.execute_python_command(python_code, exec_type=ExecTypes.EXECUTE_FILE, timeout=timeout, raise_exc=raise_exc)
+
+    # Helper functions
+    
+    def log(self, message :str="", raise_exc=True) -> PythonCommandResult:
+        return self.execute_template_command("log.jinja", template_kwargs={"msg":message, "level":"message"}, raise_exc=raise_exc)
+    
+    def log_warning(self, message :str="", raise_exc=True) -> PythonCommandResult:
+        return self.execute_template_command("log.jinja", template_kwargs={"msg":message, "level":"warning"}, raise_exc=raise_exc)
+    
+    def log_error(self, message :str="", raise_exc=True) -> PythonCommandResult:
+        return self.execute_template_command("log.jinja", template_kwargs={"msg":message, "level":"error"}, raise_exc=raise_exc)
+    
+    def execute_bp_method(self, bp_class_path: str="", bp_method_name: str="", args=(), kwargs={}, raise_exc=True) -> PythonCommandResult:
+        ''' Execute the template to execute utility BP functions.
+        '''
+        assert bp_class_path != '', "Invalid bp_class_path."
+        assert bp_method_name != '', "Invalid bp_method_name."
+        assert bp_class_path.endswith('_C'), "Invalid bp_class_path, must end with '_C'"
+        return self.execute_template_command("run_editor_bp.jinja",
+                                            template_kwargs={"bp_class_path":bp_class_path, "bp_method_name":bp_method_name, "call_method":True, "args":args, "kwargs":kwargs},
+                                            raise_exc=raise_exc)
+    
+    def set_bp_property(self, bp_class_path: str="", properties={}, raise_exc=True) -> PythonCommandResult:
+        ''' Execute the template to set properties on a utility BP.
+        '''
+        assert bp_class_path != '', "Invalid bp_class_path."
+        assert properties != {}, "Invalid properties."
+        assert bp_class_path.endswith('_C'), "Invalid bp_class_path, must end with '_C'"
+        return self.execute_template_command("run_editor_bp.jinja",
+                                             template_kwargs={"bp_class_path":bp_class_path, "properties":properties, "set_properties":True},
+                                             raise_exc=raise_exc)
+
+    def spawn_utility_widget_bp(self, widget_path: str="", raise_exc=True):
+        ''' Take a utility widget BP and spawn it as tab.
+        '''
+        return self.execute_template_command("spawn_utility_widget_bp.jinja",
+                                             template_kwargs={"widget_path":widget_path},
+                                             raise_exc=raise_exc)

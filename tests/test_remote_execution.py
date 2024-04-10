@@ -5,7 +5,7 @@ import logging
 upyre.set_log_level(logging.DEBUG)
 
 # Set your project path here, it will fetch the python settings of your project, but your MUST have the "Enable remote execution" of the python plugin enabled in unreal.
-config = upyre.RemoteExecutionConfig.from_uproject_path(r"D:\Projects\SandBox53\SandBox53.uproject")
+config = upyre.RemoteExecutionConfig.from_uproject_path(r"D:\Projects\UpyreTest\UpyreTest.uproject")
 
 # Create the connection
 with upyre.PythonRemoteConnection(config) as conn:

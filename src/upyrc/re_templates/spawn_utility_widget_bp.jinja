@@ -1,0 +1,8 @@
+{#
+    Spawn a Utility widget BP as a tab in unreal.
+    'widget_path' must be an asset path (not a _C class path).
+#}
+import unreal
+
+widget = unreal.EditorAssetLibrary.load_asset("{{ widget_path }}")
+unreal.EditorUtilitySubsystem().spawn_and_register_tab(widget)

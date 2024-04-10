@@ -1,0 +1,12 @@
+{#
+    Simple template to print out log into the unreal log output.
+#}
+import unreal
+
+{%+ if level == "warning" +%}
+unreal.log_warning("{{ msg }}")
+{%+ elif level == "error" +%}
+unreal.log_error("{{ msg }}")
+{%+ else +%}
+unreal.log("{{ msg }}")
+{%+ endif +%}
