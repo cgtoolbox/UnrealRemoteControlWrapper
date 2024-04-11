@@ -47,7 +47,7 @@ To check help on exec_types, you can call help(ExecTypes). Help is available on 
 
 Code template are available as jinja files, they can be directly used using helper functions, to execute utility blueprints, set variables, or print logs. For more infos, check test_remote_exection_templates.py.
 
-## Python remove control (uprc, HTTP api):
+## Python remote control (uprc, HTTP api):
 
 It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
 
