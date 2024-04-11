@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "upyrc"
-description = "Python wrapper around the Unreal engine remote control API."
+description = "Python wrapper around the Unreal engine remote control API and remote python execution."
 readme = "README.md"
 dynamic = ["version"]
 authors = [
@@ -12,7 +12,8 @@ authors = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-    "requests"
+    "requests",
+    "jinja2"
 ]
 
 [tool.setuptools.dynamic]
