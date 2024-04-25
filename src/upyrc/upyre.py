@@ -3,8 +3,9 @@ import uuid
 import socket
 import logging
 import json
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 from pathlib import Path
+from typing import Union, List
 
 '''
 This module allows a user to execute python code remotely on a unreal engine session.
@@ -458,6 +459,23 @@ class PythonRemoteConnection:
         if not self.remote_command_connection:
             raise ConnectionError("Connection was not openned.")
         return self.remote_command_connection.send(command=command, exec_type=exec_type, unattended=unattended, timeout=timeout, raise_exc=raise_exc)
+    
+    def execute_template_file(self, file_path: Union[Path, str], template_kwargs: dict={},
+                              search_paths: List[Union[Path, str]]=[],
+                              timeout: float=5.0, raise_exc=True) -> PythonCommandResult:
+        ''' Render and execute a given .jinja template file.
+            An optionnal list of search paths can be given, to find other inherited templates.
+        '''
+        
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+
+        parent = file_path.parent
+        search_paths.append(parent)
+        temp_env = Environment(loader=FileSystemLoader([str(s) for s in search_paths]))
+        template = temp_env.get_template(file_path.name)
+        python_code = template.render(template_kwargs)
+        return self.execute_python_command(python_code, exec_type=ExecTypes.EXECUTE_FILE, timeout=timeout, raise_exc=raise_exc)
     
     def execute_template_command(self, template_name: str, timeout: float=5.0, raise_exc: bool=False, template_kwargs={}):
         ''' Execute a rendered jinja template file, found in re_templates folder.

@@ -13,58 +13,59 @@ print("Ping: ", conn.ping())
 print("\n----------- REMOTE OBJECT --------------------------------------------------------------------------------------------------------------------------------\n")
 
 # Access to object using paths
-chair_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2"
+blue_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_2"
 
-robj_chair = conn.get_ruobject(chair_path)
-print("RUObject: " + str(robj_chair))
+blue_cube = conn.get_ruobject(blue_cube_path)
+print("RUObject: " + str(blue_cube))
 # >>> RUObject: UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2, of Class /Script/Engine.StaticMeshActor
 
 # Run a function remotely
-folder_path = robj_chair.run_function("GetFolderPath")
+folder_path = blue_cube.run_function("GetFolderPath")
 print("Folder path: ", folder_path)
 # >>> Folder path: TestData
 
 # Access property directly on URemoteObject object:
-auto_lod_generation = robj_chair.bEnableAutoLODGeneration
+auto_lod_generation = blue_cube.bEnableAutoLODGeneration
 print("bEnableAutoLODGeneration: ", auto_lod_generation)
 # >>> bEnableAutoLODGeneration: True
 
 # Access property by name:
-auto_lod_generation = robj_chair.get_property("bEnableAutoLODGeneration")
+auto_lod_generation = blue_cube.get_property("bEnableAutoLODGeneration")
 print("bEnableAutoLODGeneration (from func): ", auto_lod_generation)
 # >>> bEnableAutoLODGeneration (from func): True
 
 # Set property directly on URemoteObject object:
-robj_chair.bEnableAutoLODGeneration = False
-print("After set bEnableAutoLODGeneration to False: ", robj_chair.bEnableAutoLODGeneration)
+blue_cube.bEnableAutoLODGeneration = False
+print("After set bEnableAutoLODGeneration to False: ", blue_cube.bEnableAutoLODGeneration)
 # >>> After set bEnableAutoLODGeneration to False: False
 
 # Set property by name:
-robj_chair.set_property("bEnableAutoLODGeneration", True)
-print("After set bEnableAutoLODGeneration to True (from func): ", robj_chair.bEnableAutoLODGeneration)
+blue_cube.set_property("bEnableAutoLODGeneration", True)
+print("After set bEnableAutoLODGeneration to True (from func): ", blue_cube.bEnableAutoLODGeneration)
 # >>> After set bEnableAutoLODGeneration to True (from func): True
 
 # dir() returns all properties and functions available remotly.
-print(dir(robj_chair))
+print(dir(blue_cube))
 # >>> ['ActorHasTag (function)', 'AddActorLocalOffset (function)', 'AddActorLocalRotation (function)', 'AddActorLocalTransform (function)',  ... 'bRelevantForLevelBounds (property)', 'bRelevantForNetworkReplays (property)', 'bStaticMeshReplicateMovement (property)']
 
 print("\n----------- REMOTE BLUEPRINT --------------------------------------------------------------------------------------------------------------------------------\n")
 
 # You can also load a blueprint actor.
-blueprint_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1"
+blueprint_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.BPU_TestActorUtility_C_1"
 blueprint = conn.get_ruobject(blueprint_path)
 print("Blueprint: ", blueprint)
 # >>> UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1, of Class /Game/Blueprints/BUA_TestBlueprint.BUA_TestBlueprint_C
 
 # You can run an editor function from the blueprint.
 blueprint.run_function("SimpleTestFunc")
-# ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello world !
+# ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello from BP utility actor ! Let move those tree cubes !
+# ---> in Unreal  the three test cubes, SM_BlueCube, SM_RedCube and SM_GreenCube have now a random offset in Z.
 
 # And a function with argument(s) too and a return value:
 function_result = blueprint.run_function("SimpleTestFuncArgs", MyString="Hello from python !")
 print("Function result: ", function_result)
-# ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello from python !
-# >>> Function result: {'OutputData': True, 'MessagePrinted': 'Hello from python !'}
+# ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello from BP utility actor, msg: Hello from python !
+# >>> Function result:  {'MessagePrinted': 'Hello from BP utility actor, msg: Hello from python !', '__request_time_elapsed': datetime.timedelta(microseconds=7084)}
 
 print("\n----------- REMOTE PRESET --------------------------------------------------------------------------------------------------------------------------------\n")
 
@@ -74,28 +75,34 @@ print("Presets: ", all_presets)
 # >>> Presets: [{'Name': 'RCP_TestPreset', 'ID': '916A553549DCE66727D00585DED11589', 'Path': '/Game/RCP_TestPreset.RCP_TestPreset'}]
 
 # Get an preset object, by name.
-preset_name = "RCP_TestPreset"
+preset_name = "RCP_PresetA"
 preset = conn.get_preset(preset_name)
 print("Preset: ", preset)
 # >>> Preset:  UObject: /Game/RCP_TestPreset.RCP_TestPreset, of Class RemotePreset
 
 # Get a preset exposed property:
-preset_property = preset.get_property("Relative Location (SM_Lamp_Ceiling)")
-print("Relative Location (SM_Lamp_Ceiling) value: ", preset_property.eval())
+preset_property = preset.get_property("Relative Location")
+print("Relative Location: ", preset_property.eval())
 # >>> Relative Location (SM_Lamp_Ceiling) value: {'X': 330, 'Y': 10, 'Z': 0}
 
 # Set a property value:
-preset_property.set(Z=10.0)
+preset_property.set(Z=200.0)
+# The object "PointLight" has now its Z position set to 200.0
+
+# Changing the PointLight color to red.
+preset_property_light_color = preset.get_property("Light Color")
+preset_property_light_color.set(B=10,G=10,R=255,A=255)
+
 
 # Get a function
-preset_function = preset.get_function("My Lib Func (BPF_testFuncLib_C)")
+preset_function = preset.get_function("Function from Preset")
 print("Preset function: ", preset_function)
 # >>> Preset function:  _URemotePresetFunction: My Lib Func (BPF_testFuncLib_C) (preset: RCP_TestPreset)
 preset_function.run()
 # ---> In unreal "Hello from lib !"
 
 # Get an exposed actor info, from preset.
-preset_exposed_actor = preset.get_actor("SM_TableRound")
+preset_exposed_actor = preset.get_actor("SM_BlueCube")
 print("Exposed actor: ", preset_exposed_actor)
 # >>> Exposed actor:  _URemotePresetActor: SM_TableRound (/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_6)
 

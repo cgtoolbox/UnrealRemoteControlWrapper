@@ -20,7 +20,7 @@ In order to create a connection, we need to fetch the settings of the python plu
 
 ```python
 from upyrc import upyre
-config = upyre.RemoteExecutionConfig.from_uproject_path(r"D:\Projects\SandBox53\SandBox53.uproject")
+config = upyre.RemoteExecutionConfig.from_uproject_path(r"D:/Projects/UpyreTest/UpyreTest.uproject")
 ```
 
 You can also create the config manually with the right values, such as multicast_group ip and port, multicast_bind_adress or ip_muticast_ttl.
@@ -88,49 +88,9 @@ Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/Prod
 
 ##### Basic usage
 
-```python
+Test data: https://github.com/cgtoolbox/UnrealRemoteControlTestData
 
-# Default host and port used by the api:
-upyrc.DEFAULT_HOST = "127.0.0.1"
-upyrc.DEFAULT_PORT = 30010
-
-# Init the connection
-conn = upyrc.URConnection()
-print("Ping: ", conn.ping())
-# >>> Ping: 0:00:00.015211
-
-# Get Remote UObject by path:
-chair_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2"
-robj_chair = conn.get_uobject(chair_path)
-print("RUObject: " + str(robj_chair))
-# >>> RUObject: UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2, of Class /Script/Engine.StaticMeshActor
-
-# Access property directly on URemoteObject object:
-auto_lod_generation = robj_chair.bEnableAutoLODGeneration
-# Set property the same way:
-robj_chair.bEnableAutoLODGeneration = True
-
-# dir() returns all properties and functions available remotly.
-print(dir(robj_chair))
-# >>> ['ActorHasTag (function)', 'AddActorLocalOffset (function)', 'AddActorLocalRotation (function)', 'AddActorLocalTransform (function)',  ... 'bRelevantForLevelBounds (property)', 'bRelevantForNetworkReplays (property)', 'bStaticMeshReplicateMovement (property)']
-
-# You can also load a blueprint actor.
-blueprint_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1"
-blueprint = conn.get_uobject(blueprint_path)
-print("Blueprint: ", blueprint)
-# >>> UObject: /Game/Maps/TestMap.TestMap:PersistentLevel.BUA_TestBlueprint_C_1, of Class /Game/Blueprints/BUA_TestBlueprint.BUA_TestBlueprint_C
-
-# And a function with argument(s) too and a return value:
-function_result = blueprint.run_function("SimpleTestFuncArgs", MyString="Hello from python !")
-print("Function result: ", function_result)
-# ---> In Unreal: LogBlueprintUserMessages: [BUA_TestBlueprint_C_UAID_D89EF37396CEAA5E01_2120751343] Hello from python !
-# >>> Function result: {'OutputData': True, 'MessagePrinted': 'Hello from python !'}
-
-```
-
-##### Infos
-
-More infos on file: [test_uremote.py](test_uremote.py)
+More infos on file: [test_remote_control.py](test_remote_control.py)
 
 As well as help() on objects:
 ```python
