@@ -4,7 +4,7 @@ from upyrc import upyre
 import logging
 upyre.set_log_level(logging.DEBUG)
 
-PROJECT_FOLDER = "D:/Projects/UpyreTest"
+PROJECT_FOLDER = "D:/Projects/UpyreTest/UnrealRemoteControlTestData"
 # ==> Change it for your test project path.
 
 # Set your project path here, it will fetch the python settings of your project, but your MUST have the "Enable remote execution" of the python plugin enabled in unreal.

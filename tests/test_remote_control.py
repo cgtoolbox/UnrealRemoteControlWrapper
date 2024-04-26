@@ -134,23 +134,24 @@ print("All level actors: ", all_level_actors)
 asset_library = conn.get_editor_asset_library()
 asset_library.get_function_help("DeleteDirectory")
 
-'''
+
 print("\n----------- BATCHING PROCESSES --------------------------------------------------------------------------------------------------------------------------------\n")
 
 #/!\ NOT SUPPORTED AT THE MOMENT, UE5 CRASH ON REMOTE BATCH CALLS /!\
+'''
+blue_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_2"
+green_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_3"
+red_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_4"
 
-chair_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_2"
-lamp_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_4"
-table_path = "/Game/Maps/TestMap.TestMap:PersistentLevel.StaticMeshActor_6"
-
-robj_chair = conn.get_ruobject(chair_path)
-robj_lamp = conn.get_ruobject(lamp_path)
-robj_table = conn.get_ruobject(table_path)
+blue_cube = conn.get_ruobject(blue_cube_path)
+green_cube = conn.get_ruobject(green_cube_path)
+red_cube = conn.get_ruobject(red_cube_path)
 
 with conn.batch_context() as ctx:
 
-    robj_chair.bEnableAutoLODGeneration = False
-    robj_lamp.bEnableAutoLODGeneration = False
+    blue_cube.bEnableAutoLODGeneration = False
+    green_cube.bEnableAutoLODGeneration = False
+    red_cube.bEnableAutoLODGeneration = False
 
     results = ctx.execute()
 
