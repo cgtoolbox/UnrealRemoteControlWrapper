@@ -11,6 +11,10 @@ upyrc is available on pip:
 python -m pip install upyrc
 ```
 
+## Test data
+
+:arrow_right: A test data Unreal 5.3 project is available here: https://github.com/cgtoolbox/UnrealRemoteControlTestData
+
 ## Python remote execution (upyre)
 
 This module allows a user to execute python code remotely on a unreal engine session.
@@ -87,8 +91,6 @@ Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/Prod
 > ❌ Get thumbnail not supported.
 
 ##### Basic usage
-
-Test data: https://github.com/cgtoolbox/UnrealRemoteControlTestData
 
 More infos on file: [test_remote_control.py](test_remote_control.py)
 
