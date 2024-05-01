@@ -51,3 +51,4 @@ with upyre.PythonRemoteConnection(config) as conn:
     # Execute custom template.
     conn.execute_template_file(f"{PROJECT_FOLDER}/Content/Blueprints/test_template.jinja", template_kwargs={"msg":"Hello !"})
     # ---> In Unreal: Will print "Im printed from a custom template ! Hello ! End of template" in the "Output log" tab.
+    
