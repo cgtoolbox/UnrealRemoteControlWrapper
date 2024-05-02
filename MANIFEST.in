@@ -1,0 +1,2 @@
+recursive-include src/upyrc/re_templates *
+recursive-include src/tests *
