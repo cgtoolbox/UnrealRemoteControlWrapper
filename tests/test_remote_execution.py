@@ -39,8 +39,14 @@ with upyre.PythonRemoteConnection(config) as conn:
     conn.execute_bp_method("/Game/Blueprints/BPU_TestUtils.BPU_TestUtils_C", "PrintWithArg", args=("Hello", 5), raise_exc=True)
 
     # Spawn a utility widget BP as tab.
-    conn.spawn_utility_widget_bp("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget")
+    r = conn.spawn_utility_widget_bp("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget")
     # ---> In Unreal the BPW_TestUtilWidget will be spawned in a tab.
+    print(r.get_first_output_with_identifier("Widget"))
+    # >>> BPW_TestUtilWidget_C /Game/Levels/L_upyrc.L_upyrc:BPW_TestUtilWidget_C_0
+    conn.execute_editor_widget_bp_method("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget", "TestFunction", args=("Hello world",))
+    # ---> In Unreal, will call method "TestFunction" of the widget spawned, it will print out "Message: Hello world".
+    widget_id = r.get_first_output_with_identifier("WidgetID")
+    conn.close_utility_widget_bp_from_id(widget_id)
 
     # Print out some logs.
     conn.log("I'm a message.")

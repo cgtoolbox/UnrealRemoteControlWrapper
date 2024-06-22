@@ -269,6 +269,10 @@ class BatchResult:
     response_code: int
     response_body: dict
 
+    def __str__(self):
+
+        return f"Id: {self.request_id}, {self.response_code} {self.response_body}"
+
 class _URConnectionBatchContext:
     ''' Python context object, used to queue all the requests and execute them with .execute()
         in one batch call.
@@ -309,10 +313,11 @@ class _URConnectionBatchContext:
         method = getattr(requests, ROUTE_BATCH["method"])
 
         logging.info(f"Executing {len(self._requests)} requests in batch.")
-        with open("D:/batch_context_body.json", 'w') as f:
-            json.dump(batch_body, f, indent=4)
-
-        batch_result = method(adress, json=batch_body, timeout=self._context_timeout)
+        
+        batch_result = method(adress, json=batch_body, timeout=self._context_timeout,
+                              headers={'User-Agent': 'X-UnrealEngine-Agent',
+                                       'Content-Type': 'application/json',
+                                       'Passphrase': 'dummytext'})
         result = self._connection.handle_request_result(batch_result)
         
         out_data = []
@@ -968,7 +973,7 @@ class _URemotePreset(_URemoteObject):
     def remove_metadata(self, metadata_key: str):
         ''' Remove a metadata entry from the preset, from its key.
         '''
-        route_infos = ROUTE_PRESET_delete_METADATA.copy()
+        route_infos = ROUTE_PRESET_DELETE_METADATA.copy()
         route_infos["route"] = route_infos["route"].replace("${PRESET_NAME}", self.get_name())\
                                                    .replace("${METADATA_KEY}", metadata_key)
 

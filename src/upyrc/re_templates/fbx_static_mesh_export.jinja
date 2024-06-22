@@ -1,0 +1,42 @@
+{#
+    Template to export one or more static meshes from package names (/Game/...) as fbx in a given folder.
+#}
+import os
+from typing import List
+import unreal
+
+asset_reg = unreal.AssetRegistryHelpers.get_asset_registry()
+
+def export_fbx_static_meshes(static_mesh_fackage_name: List[str], destination_folder_path: str,
+                             export_collisions: bool=False, export_level_of_detail: bool=False, export_vertex_color: bool=False):
+
+    fbx_exporter = unreal.StaticMeshExporterFBX()
+    fbx_export_options = unreal.FbxExportOption()
+    fbx_export_options.collision = export_collisions
+    fbx_export_options.level_of_detail = export_level_of_detail
+    fbx_export_options.vertex_color  = export_vertex_color 
+
+    export_tasks = []
+    for sm_package_name in static_mesh_fackage_name:
+
+        assets = asset_reg.get_assets_by_package_name(sm_package_name)
+        if not assets:
+            unreal.log_warning(f"Can't find asset from package name: {sm_package_name}")
+            continue
+        
+        # Only export first asset found.
+        asset = assets[0]
+        export_task = unreal.AssetExportTask()
+        export_task.automated = True
+        export_task.filename = os.path.join(destination_folder_path, str(asset.asset_name) + ".fbx")
+        export_task.object = asset.get_asset()
+        export_task.options = fbx_export_options
+        export_task.exporter = fbx_exporter
+
+        export_tasks.append(export_task)
+        unreal.log(f"Exporting: {sm_package_name} to folder {destination_folder_path}")
+
+    fbx_exporter.run_asset_export_tasks(export_tasks)
+
+export_fbx_static_meshes({{static_mesh_package_names}}, r"{{destination_folder_path}}",
+                         export_collisions={{export_collisions}}, export_level_of_detail={{export_level_of_detail}}, export_vertex_color={{export_vertex_color}})

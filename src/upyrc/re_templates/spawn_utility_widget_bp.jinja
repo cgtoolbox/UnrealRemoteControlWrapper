@@ -3,6 +3,8 @@
     'widget_path' must be an asset path (not a _C class path).
 #}
 import unreal
-
+EditorUtilitySubsystem = unreal.get_editor_subsystem(unreal.EditorUtilitySubsystem)
 widget = unreal.EditorAssetLibrary.load_asset("{{ widget_path }}")
-unreal.EditorUtilitySubsystem().spawn_and_register_tab(widget)
+w, wid = EditorUtilitySubsystem.spawn_and_register_tab_and_get_id(widget)
+print(f"Widget={str(w.get_full_name()).strip()}")
+print(f"WidgetID={str(wid).strip()}")

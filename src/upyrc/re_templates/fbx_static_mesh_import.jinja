@@ -1,0 +1,47 @@
+{#
+    Template to import one or more static meshes as fbx in a given project folder (/Game/...).
+#}
+
+from pathlib import Path
+from typing import List
+import unreal
+
+def import_fbx(file_paths: List[Path], destination_ue_folder_path: str,
+               combine_meshes: bool=True, import_textures: bool=False, import_materials: bool=False,
+               replace_existing: bool=True):
+
+    fbx_import_sm_data = unreal.FbxStaticMeshImportData()
+    fbx_import_sm_data.combine_meshes = combine_meshes
+    fbx_import_sm_data.remove_degenerates = True
+    fbx_import_sm_data.vertex_color_import_option = unreal.VertexColorImportOption.REPLACE
+
+    fbx_import_options = unreal.FbxImportUI()
+    fbx_import_options.import_mesh = True
+    fbx_import_options.import_textures = import_textures
+    fbx_import_options.import_materials = import_materials
+    fbx_import_options.automated_import_should_detect_type = True
+    fbx_import_options.static_mesh_import_data = fbx_import_sm_data
+
+    import_tasks = []
+    for mesh_file_path in file_paths:
+        file_path = Path(mesh_file_path)
+        if not file_path.exists():
+            unreal.log_warning(f"Warning: can't find file {file_path}")
+            continue
+        import_task = unreal.AssetImportTask()
+        import_task.automated = True
+        import_task.destination_path = destination_ue_folder_path
+        import_task.destination_name = file_path.stem
+        import_task.filename = mesh_file_path
+        import_task.replace_existing = replace_existing
+        import_task.save = True
+        import_task.options = fbx_import_options
+        import_tasks.append(import_task)
+        unreal.log(f"Importing fbx {mesh_file_path} to folder {destination_ue_folder_path}")
+
+    # Process all task, object are imported here
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks(import_tasks)
+
+import_fbx({{fbx_file_paths}}, r"{{destination_folder_path}}",
+           combine_meshes={{combine_meshes}})
+           

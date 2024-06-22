@@ -138,7 +138,7 @@ asset_library.get_function_help("DeleteDirectory")
 print("\n----------- BATCHING PROCESSES --------------------------------------------------------------------------------------------------------------------------------\n")
 
 #/!\ NOT SUPPORTED AT THE MOMENT, UE5 CRASH ON REMOTE BATCH CALLS /!\
-'''
+
 blue_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_2"
 green_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_3"
 red_cube_path = "/Game/Levels/L_upyrc.L_upyrc:PersistentLevel.StaticMeshActor_4"
@@ -155,5 +155,6 @@ with conn.batch_context() as ctx:
 
     results = ctx.execute()
 
-print(results)
-'''
+for r in results:
+    print(r)
+

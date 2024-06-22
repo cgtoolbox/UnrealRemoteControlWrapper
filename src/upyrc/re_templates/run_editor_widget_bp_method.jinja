@@ -1,0 +1,10 @@
+import unreal
+
+EditorUtilitySubsystem = unreal.get_editor_subsystem(unreal.EditorUtilitySubsystem)
+
+widget = unreal.EditorAssetLibrary.load_asset("{{ bp_path }}")
+
+widget_tab = EditorUtilitySubsystem.find_utility_widget_from_blueprint(widget)
+if widget_tab:
+    widget_tab.call_method("{{ bp_method_name }}", {{ args }}, {{ kwargs }})
+    

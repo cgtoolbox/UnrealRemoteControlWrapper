@@ -1,3 +1,4 @@
+import os
 import configparser
 import uuid
 import socket
@@ -60,11 +61,21 @@ def get_command_address():
         _, port = s.getsockname()
     return ("127.0.0.1", port)
 
+# Config fallbacks from env
+UPYRE_BUFFER_SIZE = os.environ.get("UPYRE_BUFFER_SIZE", "2_097_152")
+UPYRE_BUFFER_SIZE = int(UPYRE_BUFFER_SIZE)
+UPYRE_MULTICAST_GROUP_ADDR = os.environ.get("UPYRE_MULTICAST_GROUP_ADDR", "239.0.0.1")
+UPYRE_MULTICAST_GROUP_PORT = os.environ.get("UPYRE_MULTICAST_GROUP_PORT", "6766")
+UPYRE_MULTICAST_GROUP_PORT = int(UPYRE_MULTICAST_GROUP_PORT)
+UPYRE_MULTICAST_BIND_ADDRESS = os.environ.get("MULTICAST_BIND_ADDRESS", "127.0.0.1")
+UPYRE_IP_MULTICAST_TTL = os.environ.get("UPYRE_IP_MULTICAST_TTL", "0")
+UPYRE_IP_MULTICAST_TTL = int(UPYRE_IP_MULTICAST_TTL)
+
 # For config fallbacks
-BUFFER_SIZE = 2_097_152
-MULTICAST_GROUP = ("239.0.0.1", 6766)
-MULTICAST_BIND_ADDRESS = "0.0.0.0"
-IP_MULTICAST_TTL = 0
+BUFFER_SIZE = UPYRE_BUFFER_SIZE
+MULTICAST_GROUP = (UPYRE_MULTICAST_GROUP_ADDR, UPYRE_MULTICAST_GROUP_PORT)
+MULTICAST_BIND_ADDRESS = UPYRE_MULTICAST_BIND_ADDRESS
+IP_MULTICAST_TTL = UPYRE_IP_MULTICAST_TTL
 
 # Python exec types enum
 class ExecTypes:
@@ -294,6 +305,13 @@ class PythonCommandResult:
     def output(self) -> list:
         return [o for o in self.data.get("output", [])]
     
+    def get_first_output_with_identifier(self, identifier: str) -> str:
+
+        if not identifier.startswith("="): identifier = identifier + "="
+        for data in self.output:
+            if data.get("output", '').startswith(identifier):
+                return data.get("output").replace(identifier, '').strip()
+
     @property
     def output_str(self) -> str:
         return '\n'.join([o['type'] + ': ' + o['output'] for o in self.output])
@@ -333,7 +351,7 @@ class PythonRemoteCommandConnection(_Message):
                           "data":{}
                          }
         
-    def send(self, command: str, exec_type: ExecTypes=ExecTypes.EVALUATE_STATEMENT, unattended: bool=True, timeout: float=5.0, raise_exc: bool=False):
+    def send(self, command: str, exec_type: ExecTypes=ExecTypes.EVALUATE_STATEMENT, unattended: bool=True, timeout: float=5.0, raise_exc: bool=False) -> PythonCommandResult:
         ''' Send the command, the receive method is executed as well to return the result of the command.
         '''
         logging.debug("Sending command.")
@@ -348,7 +366,7 @@ class PythonRemoteCommandConnection(_Message):
 
         return self.receive(timeout=timeout, raise_exc=raise_exc)
 
-    def receive(self, timeout: float=5.0, raise_exc: bool=False):
+    def receive(self, timeout: float=5.0, raise_exc: bool=False) -> PythonCommandResult:
         ''' Get the json result data for the executed command, and construct a CommandResult object with it.
             The implementation is a bit different than other messages as the timeout mechanism can't be used here as we don't know how long the command will take unreal side.
             For safety, we have a different timeout version than other message if there is an issue with getting the command output. It can be set on the execute_python_command function.
@@ -477,7 +495,7 @@ class PythonRemoteConnection:
         python_code = template.render(template_kwargs)
         return self.execute_python_command(python_code, exec_type=ExecTypes.EXECUTE_FILE, timeout=timeout, raise_exc=raise_exc)
     
-    def execute_template_command(self, template_name: str, timeout: float=5.0, raise_exc: bool=False, template_kwargs={}):
+    def execute_template_command(self, template_name: str, timeout: float=5.0, raise_exc: bool=False, exec_type=ExecTypes.EXECUTE_FILE, template_kwargs={}) -> PythonCommandResult:
         ''' Execute a rendered jinja template file, found in re_templates folder.
             'template_kwargs' dicitonnary will be applied to the template.
         '''
@@ -486,7 +504,7 @@ class PythonRemoteConnection:
 
         template = jinja_env.get_template(template_name)
         python_code = template.render(template_kwargs)
-        return self.execute_python_command(python_code, exec_type=ExecTypes.EXECUTE_FILE, timeout=timeout, raise_exc=raise_exc)
+        return self.execute_python_command(python_code, exec_type=exec_type, timeout=timeout, raise_exc=raise_exc)
 
     # Helper functions
     
@@ -505,8 +523,17 @@ class PythonRemoteConnection:
         assert bp_class_path != '', "Invalid bp_class_path."
         assert bp_method_name != '', "Invalid bp_method_name."
         assert bp_class_path.endswith('_C'), "Invalid bp_class_path, must end with '_C'"
-        return self.execute_template_command("run_editor_bp.jinja",
+        return self.execute_template_command("run_editor_bp_method.jinja",
                                             template_kwargs={"bp_class_path":bp_class_path, "bp_method_name":bp_method_name, "call_method":True, "args":args, "kwargs":kwargs},
+                                            raise_exc=raise_exc)
+    
+    def execute_editor_widget_bp_method(self, bp_path: str="", bp_method_name: str="", args=(), kwargs={}, raise_exc=True) -> PythonCommandResult:
+        ''' Execute the template to execute utility BP functions.
+        '''
+        assert bp_path != '', "Invalid bp_class_path."
+        assert bp_method_name != '', "Invalid bp_method_name."
+        return self.execute_template_command("run_editor_widget_bp_method.jinja",
+                                            template_kwargs={"bp_path":bp_path, "bp_method_name":bp_method_name, "args":args, "kwargs":kwargs},
                                             raise_exc=raise_exc)
     
     def set_bp_property(self, bp_class_path: str="", properties={}, raise_exc=True) -> PythonCommandResult:
@@ -515,13 +542,46 @@ class PythonRemoteConnection:
         assert bp_class_path != '', "Invalid bp_class_path."
         assert properties != {}, "Invalid properties."
         assert bp_class_path.endswith('_C'), "Invalid bp_class_path, must end with '_C'"
-        return self.execute_template_command("run_editor_bp.jinja",
+        return self.execute_template_command("run_editor_bp_method.jinja",
                                              template_kwargs={"bp_class_path":bp_class_path, "properties":properties, "set_properties":True},
                                              raise_exc=raise_exc)
 
-    def spawn_utility_widget_bp(self, widget_path: str="", raise_exc=True):
+    def spawn_utility_widget_bp(self, widget_path: str="", raise_exc: bool=True) -> PythonCommandResult:
         ''' Take a utility widget BP and spawn it as tab.
         '''
         return self.execute_template_command("spawn_utility_widget_bp.jinja",
                                              template_kwargs={"widget_path":widget_path},
+                                             raise_exc=raise_exc)
+    
+    def close_utility_widget_bp_from_id(self, widget_id: str="", raise_exc: bool=True) -> PythonCommandResult:
+        ''' Close a utility widget already spawned.
+        '''
+        return self.execute_template_command("close_widget_bp_from_id.jinja",
+                                             template_kwargs={"widget_id":widget_id},
+                                             raise_exc=raise_exc)
+    
+    def import_fbx_static_meshes(self, fbx_file_paths: List[str], destination_folder_path: str,
+                                       combine_meshes: bool=True, raise_exc: bool=True) -> PythonCommandResult:
+        ''' Import given fbx file(s) and import them (static meshes only) to the given destination_folder_path.
+            The destination_folder_path must starts with /Game/ (Which is the /Content/ of a UE project).
+
+            If multiple meshes are found in the FBX, they can be combined or not, using the combine_meshes bool.
+        '''
+        return self.execute_template_command("fbx_static_mesh_import.jinja",
+                                             template_kwargs={"fbx_file_paths":[f.replace('\\', '/') for f in fbx_file_paths],
+                                                              "destination_folder_path":destination_folder_path,
+                                                              "combine_meshes":combine_meshes},
+                                             raise_exc=raise_exc)
+    
+    def export_fbx_static_meshes(self, static_mesh_package_names: List[str], destination_folder_path: str,
+                                       export_collisions: bool=False, export_level_of_detail: bool=False, export_vertex_color: bool=False,
+                                       raise_exc: bool=True) -> PythonCommandResult:
+        ''' Export given static mesh(es) from package name (/Game/myfolder/myasset) as fbx in a given folder.
+        '''
+        return self.execute_template_command("fbx_static_mesh_export.jinja",
+                                             template_kwargs={"static_mesh_package_names":static_mesh_package_names,
+                                                              "export_collisions":export_collisions,
+                                                              "export_level_of_detail":export_level_of_detail,
+                                                              "export_vertex_color":export_vertex_color,
+                                                              "destination_folder_path":destination_folder_path},
                                              raise_exc=raise_exc)
