@@ -2,13 +2,17 @@ import os
 import configparser
 import uuid
 import socket
+import tempfile
 import logging
 import json
 from jinja2 import Environment, PackageLoader, FileSystemLoader
 from pathlib import Path
 from typing import Union, List
 
+from upyrc.upyre_json_pipe import upyre_json_pipe
+
 '''
+
 This module allows a user to execute python code remotely on a unreal engine session.
 It needs to have the python plugin enabled on unreal, as well as the allow python remote execution option set on.
 
@@ -29,6 +33,11 @@ with upyre.PythonRemoteConnection(config) as conn:
 Or you can call open_connection() and close_connection() manually when needed.
 
 To check help on exec_types, you can call help(ExecTypes). Help is available on other objects as well.
+
+A json base communication pipeline is available, it can be enabled with: upyre.PythonRemoteConnection(config, open_json_output_pipe=True).
+This will create a temporary json file where data can be written to on Unreal session side and are automatically available after command execution on the PythonCommandResult object.
+Data can be written from the PythonRemoteConnection as well using the write(entry_name, entry_data) method, it can be then read by Unreal session.
+See upyre_json_pipe/upyre_json_pipe.py for more infos.
 
 '''
 
@@ -53,6 +62,11 @@ PYTHON_SETTING_ENTRY = "/Script/PythonScriptPlugin.PythonScriptPluginSettings"  
 
 # Jinja templates env
 jinja_env = Environment(loader=PackageLoader("upyrc", "re_templates"))
+
+# Command output pipe default
+COMMAND_JSON_OUTPUT_PIPE_DEFAULT_FILE = tempfile.gettempdir() + '\\upyrc_output_pipe.json'
+AUTO_REMOVE_JSON_TEMP_FILE = True
+JSON_OUTPUT_PIPE_MODULE_FOLDER = os.path.dirname(__file__) + "\\upyre_json_pipe"
 
 # Command ip and port to send commands between python and unreal.
 def get_command_address():
@@ -93,6 +107,7 @@ class InvalidConfigError(Exception): ...
 
 # Connection exception
 class ConnectionError(Exception): ...
+class OutputPipeNotOpenedError(Exception): ...
 
 class RemoteExecutionConfig:
     ''' Config used to create connection to unreal. There are 2 ways to create it:
@@ -287,11 +302,31 @@ class PythonCommandResult:
         self.target_node_id = json_result_data["dest"]
         self.raise_exc = raise_exc
 
+        self.output_pipe_data_opened = False
+        self.output_pipe_data_file = ''
+        self._output_pipe_data = {}
+
     def __bool__(self) -> bool:
         return self.success
     
+    def _retrieve_output_pipe_data(self, temp_file: str=''):
+        ''' If output_pipe_data was opened on the PythonRemoteConnection creation, a temporary json file
+            is created in order to transfert some data between the two (or more) processes.
+            At the end of the script execution, those data are read out of the json file and will be available using PythonCommandResult.output_pipe_data.get("name").
+
+            By default, the json file is then deleted, this behavior can be changed in the module global library AUTO_REMOVE_TEMP_FILE.
+        '''
+        if not temp_file:
+            raise OutputPipeNotOpenedError()
+        
+        if os.path.exists(temp_file):
+            with open(temp_file, 'r') as f:
+                self._output_pipe_data = json.load(f)
+
     @property
     def success(self) -> bool:
+        ''' Return if the remote script succeeded or not.
+        '''
         success = self.data.get("success", False)
         if not success and self.raise_exc:
             raise PythonCommandError(self.result)
@@ -299,18 +334,39 @@ class PythonCommandResult:
     
     @property
     def result(self) -> str:
+        ''' Returns the string result of the remote script execution.
+        '''
         return self.data.get("result", "None")
 
     @property
     def output(self) -> list:
+        ''' Returns the whole standard output of the python script execution.
+        '''
         return [o for o in self.data.get("output", [])]
     
-    def get_first_output_with_identifier(self, identifier: str) -> str:
+    @property
+    def output_pipe_data(self):
+        return self._output_pipe_data
+    
+    def has_output_pipe_data(self, data_name: str='') -> bool:
+        ''' Return True or False if the output pipe data has an entry defined by data_name (str).
+            If no data_name is provided, check if there are any data at all.
+        '''
+        if not data_name:
+            return self._output_pipe_data != {}
+        else:
+            return data_name in self._output_pipe_data.keys()
 
+    def get_first_output_with_identifier(self, identifier: str) -> str:
+        ''' Extracts an string output out of the stdout data, starting with an identifier of format XXX=data.
+            In the remote script, you would print out this data simply using print("identifier=data here").
+            This method is deprecated, use output_pipe_data instead.
+        '''
         if not identifier.startswith("="): identifier = identifier + "="
         for data in self.output:
             if data.get("output", '').startswith(identifier):
                 return data.get("output").replace(identifier, '').strip()
+        return None
 
     @property
     def output_str(self) -> str:
@@ -403,7 +459,8 @@ class PythonRemoteConnection:
         From there you can execute a python command.
         It can be used as context manager, to close the connection once out.
     '''
-    def __init__(self, config: RemoteExecutionConfig=None, project_name: str=''):
+    def __init__(self, config: RemoteExecutionConfig=None, project_name: str='', open_json_output_pipe: bool=False,
+                       json_output_pipe_temp_file: str=COMMAND_JSON_OUTPUT_PIPE_DEFAULT_FILE):
 
         if not config:
             config = RemoteExecutionConfig()
@@ -412,6 +469,11 @@ class PythonRemoteConnection:
 
         if project_name:
             self.config.PROJECT_NAME = project_name
+
+        # Open a pipe where data can be written in a temp json file to be retrieved after command execution.
+        self.open_json_output_pipe = open_json_output_pipe
+        self.json_output_pipe_temp_file = json_output_pipe_temp_file
+        self.json_pipe = None
 
         self.connection_created = False
         self.unreal_node_id = ''
@@ -428,8 +490,56 @@ class PythonRemoteConnection:
         membership_request = socket.inet_aton(self.config.MULTICAST_GROUP[0]) + socket.inet_aton(self.config.MULTICAST_BIND_ADDRESS)
         self.mcastsock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, membership_request)
 
+    def init_json_pipe(self, json_output_pipe_temp_file: str='', force: bool=False) -> bool:
+        ''' Execute the add_command_json_output_pipe.jinja template, which will append the upyre_json_pipe module to unreal python's sys.paths.
+        '''
+
+        if self.open_json_output_pipe and not force:
+            logging.debug(rf"Json output pipe module already available.")
+            return
+
+        self.open_json_output_pipe = True
+        if json_output_pipe_temp_file and json_output_pipe_temp_file != self.json_output_pipe_temp_file:
+            self.json_output_pipe_temp_file = json_output_pipe_temp_file
+
+        # Add module to sys.paths and update env variables.\
+        result = self.execute_template_command("add_command_json_output_pipe.jinja",
+                                               template_kwargs={"json_output_pipe_module":JSON_OUTPUT_PIPE_MODULE_FOLDER,
+                                                                "json_output_pipe_file":self.json_output_pipe_temp_file})
+        if result.success:
+            self.json_pipe = upyre_json_pipe.CommandOutputPipe(self.json_output_pipe_temp_file)
+            logging.info(rf"Json output pipe module available.")
+        else:
+            self.json_pipe = None
+            self.open_json_output_pipe = False
+            logging.error(rf"Json output pipe module not available.")
+
+        return result.success
+    
+    def write(self, entry_name, entry_value):
+        ''' Write data to the temp json file pipe.
+        '''
+        if self.json_pipe is None or not self.open_json_output_pipe:
+            raise OutputPipeNotOpenedError()
+        self.json_pipe.write(entry_name, entry_value)
+
+    def read(self, entry_name):
+        ''' Read data from the temp json file pipe.
+        '''
+        if self.json_pipe is None or not self.open_json_output_pipe:
+            raise OutputPipeNotOpenedError()
+        self.json_pipe.read(entry_name)
+
+    def flush(self):
+        ''' Flush the pipe data, if any.
+        '''
+        if self.json_pipe:
+            self.json_pipe.flush()
+
     def __enter__(self):
         self.open_connection()
+        if self.open_json_output_pipe:
+            self.init_json_pipe(force=True)
         return self
 
     @property
@@ -467,7 +577,15 @@ class PythonRemoteConnection:
             self.mcastsock.close()
             logging.debug("Connection closed !")
 
-    def execute_python_command(self, command: str, exec_type: ExecTypes=ExecTypes.EVALUATE_STATEMENT, unattended: bool=True, timeout: float=5.0, raise_exc: bool=False):
+        # Remove objet and temp file involved in json pipe.
+        if AUTO_REMOVE_JSON_TEMP_FILE:
+            self.json_pipe = None
+            try:
+                os.remove(self.json_output_pipe_temp_file)
+            except OSError:
+                pass
+
+    def execute_python_command(self, command: str, exec_type: ExecTypes=ExecTypes.EVALUATE_STATEMENT, unattended: bool=True, timeout: float=5.0, raise_exc: bool=False) -> PythonCommandResult:
         ''' Execute the given python command, this can be either python statement(s) or a path to a python file.
             unattended: Whether to run the command in "unattended" mode (suppressing some UI)
             exec_type: See ExecTypes help.
@@ -476,7 +594,15 @@ class PythonRemoteConnection:
         '''
         if not self.remote_command_connection:
             raise ConnectionError("Connection was not openned.")
-        return self.remote_command_connection.send(command=command, exec_type=exec_type, unattended=unattended, timeout=timeout, raise_exc=raise_exc)
+        
+        result = self.remote_command_connection.send(command=command, exec_type=exec_type, unattended=unattended, timeout=timeout, raise_exc=raise_exc)
+
+        if self.open_json_output_pipe:
+            result._retrieve_output_pipe_data(self.json_output_pipe_temp_file)
+            result.output_pipe_data_opened = self.open_json_output_pipe
+            result.output_pipe_data_file = self.json_output_pipe_temp_file
+
+        return result
     
     def execute_template_file(self, file_path: Union[Path, str], template_kwargs: dict={},
                               search_paths: List[Union[Path, str]]=[],
@@ -493,6 +619,7 @@ class PythonRemoteConnection:
         temp_env = Environment(loader=FileSystemLoader([str(s) for s in search_paths]))
         template = temp_env.get_template(file_path.name)
         python_code = template.render(template_kwargs)
+
         return self.execute_python_command(python_code, exec_type=ExecTypes.EXECUTE_FILE, timeout=timeout, raise_exc=raise_exc)
     
     def execute_template_command(self, template_name: str, timeout: float=5.0, raise_exc: bool=False, exec_type=ExecTypes.EXECUTE_FILE, template_kwargs={}) -> PythonCommandResult:
@@ -549,6 +676,7 @@ class PythonRemoteConnection:
     def spawn_utility_widget_bp(self, widget_path: str="", raise_exc: bool=True) -> PythonCommandResult:
         ''' Take a utility widget BP and spawn it as tab.
         '''
+        self.init_json_pipe()
         return self.execute_template_command("spawn_utility_widget_bp.jinja",
                                              template_kwargs={"widget_path":widget_path},
                                              raise_exc=raise_exc)
@@ -556,6 +684,7 @@ class PythonRemoteConnection:
     def close_utility_widget_bp_from_id(self, widget_id: str="", raise_exc: bool=True) -> PythonCommandResult:
         ''' Close a utility widget already spawned.
         '''
+        self.init_json_pipe()
         return self.execute_template_command("close_widget_bp_from_id.jinja",
                                              template_kwargs={"widget_id":widget_id},
                                              raise_exc=raise_exc)
@@ -567,17 +696,19 @@ class PythonRemoteConnection:
 
             If multiple meshes are found in the FBX, they can be combined or not, using the combine_meshes bool.
         '''
+        self.init_json_pipe()
         return self.execute_template_command("fbx_static_mesh_import.jinja",
                                              template_kwargs={"fbx_file_paths":[f.replace('\\', '/') for f in fbx_file_paths],
                                                               "destination_folder_path":destination_folder_path,
                                                               "combine_meshes":combine_meshes},
                                              raise_exc=raise_exc)
-    
+        
     def export_fbx_static_meshes(self, static_mesh_package_names: List[str], destination_folder_path: str,
                                        export_collisions: bool=False, export_level_of_detail: bool=False, export_vertex_color: bool=False,
                                        raise_exc: bool=True) -> PythonCommandResult:
         ''' Export given static mesh(es) from package name (/Game/myfolder/myasset) as fbx in a given folder.
         '''
+        self.init_json_pipe()
         return self.execute_template_command("fbx_static_mesh_export.jinja",
                                              template_kwargs={"static_mesh_package_names":static_mesh_package_names,
                                                               "export_collisions":export_collisions,
@@ -585,3 +716,4 @@ class PythonRemoteConnection:
                                                               "export_vertex_color":export_vertex_color,
                                                               "destination_folder_path":destination_folder_path},
                                              raise_exc=raise_exc)
+    

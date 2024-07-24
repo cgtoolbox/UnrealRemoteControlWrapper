@@ -11,13 +11,14 @@ PROJECT_FOLDER = "D:/Projects/UpyreTest/UnrealRemoteControlTestData"
 config = upyre.RemoteExecutionConfig.from_uproject_path(f"{PROJECT_FOLDER}/UpyreTest.uproject")
 
 # Create the connection
-with upyre.PythonRemoteConnection(config) as conn:
-
+with upyre.PythonRemoteConnection(config, open_json_output_pipe=True) as conn:
+    
     # This execute simple multiline python statement OR file
     result = conn.execute_python_command("unreal.log('Hello')\nunreal.log('World ?')", exec_type=upyre.ExecTypes.EXECUTE_FILE, raise_exc=True)
     print(result)
 
     # Example with a file path
+    conn.write("TestRead", 1234)  # Data sent to process using the json temp file pipe.
     result_file = conn.execute_python_command(f"{PROJECT_FOLDER}/Content/Blueprints/test_pyfile_ue.py", exec_type=upyre.ExecTypes.EXECUTE_FILE)
     print(result_file)
 
@@ -29,7 +30,7 @@ with upyre.PythonRemoteConnection(config) as conn:
 
     # You can also evalurate a single line statement and get the result back
     result_statement = conn.execute_python_command("1 + 2", exec_type=upyre.ExecTypes.EVALUATE_STATEMENT)
-    print(result_statement.result) # This print 3
+    print(result_statement) # This print 3
 
     # Set a property of a utility BP.
     conn.set_bp_property("/Game/Blueprints/BPU_TestUtils.BPU_TestUtils_C", properties={"VarToChange":True})
@@ -41,11 +42,11 @@ with upyre.PythonRemoteConnection(config) as conn:
     # Spawn a utility widget BP as tab.
     r = conn.spawn_utility_widget_bp("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget")
     # ---> In Unreal the BPW_TestUtilWidget will be spawned in a tab.
-    print(r.get_first_output_with_identifier("Widget"))
+    
     # >>> BPW_TestUtilWidget_C /Game/Levels/L_upyrc.L_upyrc:BPW_TestUtilWidget_C_0
     conn.execute_editor_widget_bp_method("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget", "TestFunction", args=("Hello world",))
     # ---> In Unreal, will call method "TestFunction" of the widget spawned, it will print out "Message: Hello world".
-    widget_id = r.get_first_output_with_identifier("WidgetID")
+    widget_id = r.output_pipe_data.get("WidgetID")
     conn.close_utility_widget_bp_from_id(widget_id)
 
     # Print out some logs.

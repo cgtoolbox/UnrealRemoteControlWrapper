@@ -1,0 +1,25 @@
+{#
+    Template which will be executed if upyre.PythonRemoteConnection "open_output_pipe" is set to True at the connection creation,
+    or if upyre.PythonRemoteConnection.init_json_output_pipe() is called.
+    Certains builtin method such as PythonRemoteConnection.spawn_utility_widget_bp() will force it as well.
+
+    This will append the module "upyre_json_pipe" on the remote pyhton (unreal) sys.paths.
+
+    Once that module is available, the remote python session (unreal) can simple write data using:
+    
+    from upyre_json_pipe import command_output_pipe
+    command_output_pipe.add("EntryName", data)
+#}
+
+import sys
+import os
+import unreal
+
+os.environ["UPYRE_JSON_PIPE_FILE"] = r"{{ json_output_pipe_file }}"
+
+module_path = r"{{ json_output_pipe_module }}"
+if not module_path in sys.path:
+    sys.path.append(module_path)
+
+unreal.log(rf"Adding '{module_path}' to sys.")
+unreal.log(rf"Adding {os.environ['UPYRE_JSON_PIPE_FILE']} to environ.")
