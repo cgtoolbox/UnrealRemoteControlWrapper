@@ -523,12 +523,12 @@ class PythonRemoteConnection:
             raise OutputPipeNotOpenedError()
         self.json_pipe.write(entry_name, entry_value)
 
-    def read(self, entry_name):
+    def read(self, entry_name, default=None):
         ''' Read data from the temp json file pipe.
         '''
         if self.json_pipe is None or not self.open_json_output_pipe:
             raise OutputPipeNotOpenedError()
-        self.json_pipe.read(entry_name)
+        return self.json_pipe.read(entry_name, default=default)
 
     def flush(self):
         ''' Flush the pipe data, if any.

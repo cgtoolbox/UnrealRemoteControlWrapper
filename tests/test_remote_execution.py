@@ -46,7 +46,7 @@ with upyre.PythonRemoteConnection(config, open_json_output_pipe=True) as conn:
     # >>> BPW_TestUtilWidget_C /Game/Levels/L_upyrc.L_upyrc:BPW_TestUtilWidget_C_0
     conn.execute_editor_widget_bp_method("/Game/Blueprints/BPW_TestUtilWidget.BPW_TestUtilWidget", "TestFunction", args=("Hello world",))
     # ---> In Unreal, will call method "TestFunction" of the widget spawned, it will print out "Message: Hello world".
-    widget_id = r.output_pipe_data.get("WidgetID")
+    widget_id = conn.read("WidgetID")
     conn.close_utility_widget_bp_from_id(widget_id)
 
     # Print out some logs.
