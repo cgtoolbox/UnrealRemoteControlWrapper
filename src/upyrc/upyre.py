@@ -59,6 +59,7 @@ PROTOCOL_VERSION = 1
 SOCKET_TIMEOUT = 0.5 # second
 PYTHON_SETTING_INI_FILE = "DefaultEngine.ini"
 PYTHON_SETTING_ENTRY = "/Script/PythonScriptPlugin.PythonScriptPluginSettings"  # read only in DefaultEngine.ini in projects
+CONNECTION_UUID_SIZE = 4
 
 # Jinja templates env
 jinja_env = Environment(loader=PackageLoader("upyrc", "re_templates"))
@@ -470,9 +471,12 @@ class PythonRemoteConnection:
         if project_name:
             self.config.PROJECT_NAME = project_name
 
+        # Connection uuid, mostly used by json pipe.
+        self.__uuid = os.urandom(CONNECTION_UUID_SIZE).hex()
+
         # Open a pipe where data can be written in a temp json file to be retrieved after command execution.
         self.open_json_output_pipe = open_json_output_pipe
-        self.json_output_pipe_temp_file = json_output_pipe_temp_file
+        self.json_output_pipe_temp_file = self.build_json_pipe_file_path(json_output_pipe_temp_file)
         self.json_pipe = None
 
         self.connection_created = False
@@ -490,6 +494,17 @@ class PythonRemoteConnection:
         membership_request = socket.inet_aton(self.config.MULTICAST_GROUP[0]) + socket.inet_aton(self.config.MULTICAST_BIND_ADDRESS)
         self.mcastsock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, membership_request)
 
+    def build_json_pipe_file_path(self, json_file_path: str) -> str:
+        ''' Add connection uuid to json file temp path.
+        '''
+        r, f = os.path.split(json_file_path)
+        return os.path.join(r, self.__uuid + '_' + f)
+    
+    def get_json_pipe_file_path(self) -> str:
+        ''' Get the temp pipe json file path, including the connection's uuid.
+        '''
+        return self.json_output_pipe_temp_file
+
     def init_json_pipe(self, json_output_pipe_temp_file: str='', force: bool=False) -> bool:
         ''' Execute the add_command_json_output_pipe.jinja template, which will append the upyre_json_pipe module to unreal python's sys.paths.
         '''
@@ -499,6 +514,8 @@ class PythonRemoteConnection:
             return
 
         self.open_json_output_pipe = True
+        if json_output_pipe_temp_file != '':
+            json_output_pipe_temp_file = self.build_json_pipe_file_path(json_output_pipe_temp_file)
         if json_output_pipe_temp_file and json_output_pipe_temp_file != self.json_output_pipe_temp_file:
             self.json_output_pipe_temp_file = json_output_pipe_temp_file
 
@@ -508,7 +525,7 @@ class PythonRemoteConnection:
                                                                 "json_output_pipe_file":self.json_output_pipe_temp_file})
         if result.success:
             self.json_pipe = upyre_json_pipe.CommandOutputPipe(self.json_output_pipe_temp_file)
-            logging.info(rf"Json output pipe module available.")
+            logging.info(rf"Json output pipe module available: {self.json_output_pipe_temp_file}.")
         else:
             self.json_pipe = None
             self.open_json_output_pipe = False
