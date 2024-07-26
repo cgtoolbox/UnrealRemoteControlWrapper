@@ -20,7 +20,8 @@ python -m pip install upyrc
 ## Python remote execution (upyre)
 
 This module allows a user to execute python code remotely on a unreal engine session.
-It needs to have the python plugin enabled on unreal, as well as the -allow python remote execution- option set on.
+
+⚠️ It needs to have the python plugin enabled on unreal, as well as the -allow python remote execution- option set on.
 
 In order to create a connection, we need to fetch the settings of the python plugin, this can be done by giving the full path to a uproject to the create config object:
 
@@ -55,7 +56,7 @@ Code template are available as jinja files, they can be directly used using help
 
 ### DataExchange:
 
-To exchange data between the two pythoh processes, a json pipe is available, or it can be done using printing some data in the standard output and fetch them back using dedicated methods.
+To exchange data between the two python processes, a json pipe is available, or it can be done using printing some data in the standard output and fetch them back using dedicated methods.
 
 ```python
 
@@ -88,13 +89,13 @@ with upyre.PythonRemoteConnection(config, open_json_output_pipe=True) as conn:
 
 ```
 
-This is a one way only data exchange, and only string data is supported atm.
+This is a one way only data exchange, and only string data are supported atm.
 
 (But a json string can be sent that way)
 
 ## Python remote control (uprc, HTTP api):
 
-It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
+⚠️ It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
 
 ```
 WebControl.StartServer
@@ -127,7 +128,7 @@ Http api [endpoints documentation](https://docs.unrealengine.com/4.27/en-US/Prod
 >
 > ✔️ Get utilities EditorActorSubsystem and EditorAssetLibrary.
 >
-> ❌ Batch process is not supported at the moment, Unreal crashes when a batch call is executed.
+> ✔️ Batch process is supported.
 >
 > ❌ Get thumbnail not supported.
 
