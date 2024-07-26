@@ -53,6 +53,45 @@ To check help on exec_types, you can call help(ExecTypes). Help is available on 
 
 Code template are available as jinja files, they can be directly used using helper functions, to execute utility blueprints, set variables, or print logs. For more infos, check test_remote_exection_templates.py.
 
+### DataExchange:
+
+To exchange data between the two pythoh processes, a json pipe is available, or it can be done using printing some data in the standard output and fetch them back using dedicated methods.
+
+```python
+
+# In the remote python process (not Unreal).
+
+# open_json_output_pipe=True open the pipe and create a temp json file which can be
+# accessed by both processes.
+with upyre.PythonRemoteConnection(config, open_json_output_pipe=True) as conn:
+
+    conn.write("my_data", 123) # Write data in the json file
+
+# In the python command you execute Unreal side, data can be fetched using:
+
+from upyre_json_pipe import json_pipe
+json_pipe.read("my_data") # -> return 123
+json_pipe.write("unrealside_data", "foo")  # Data written in the json file, can be fetch by the remote process with conn.read("unrealside_data")
+
+```
+
+Or using the standard print function:
+
+```python
+# In the python command you execute Unreal side (my_command.py):
+print("mydata=bar")
+
+# In the remote python process (not Unreal).
+with upyre.PythonRemoteConnection(config, open_json_output_pipe=True) as conn:
+    cmd_result = conn.execute_python_command("my_command.py")
+    cmd_result.get_first_output_with_identifier("mydata") # -> returns "bar"
+
+```
+
+This is a one way only data exchange, and only string data is supported atm.
+
+(But a json string can be sent that way)
+
 ## Python remote control (uprc, HTTP api):
 
 It needs to have the remote API plugin installed on your Unreal project, as well as the server started, you can do that on the cmd: 
